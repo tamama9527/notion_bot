@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 	"log"
 	"path/filepath"
+    "os"
+    "regexp"
 
 	"github.com/kjk/notionapi"
 )
@@ -15,7 +17,7 @@ func NotionExport(client *notionapi.Client, pageID string) {
 	zipByte, err := client.ExportPages(
 		pageID,
 		notionapi.ExportTypeMarkdown,
-		true,
+		false,
 	)
 	if err != nil {
 		panic(err)
@@ -36,12 +38,13 @@ func NotionExport(client *notionapi.Client, pageID string) {
 			continue
 		}
         filePath := filepath.Join(contentPath, zipFile.Name)
+        r := regexp.MustCompile(`\w{32}`)
+        filePath = r.ReplaceAllString(filePath,pageID)
         os.MkdirAll(filepath.Dir(filePath),os.ModePerm)
-        log.Println("zipFileName:"+zipFile.Name)
 		err = ioutil.WriteFile(
-			filepath.Join(contentPath, zipFile.Name),
+			filePath,
 			unzippedFileBytes,
-			0777,
+			0644,
 		)
 		if err != nil {
 			log.Println(err)
